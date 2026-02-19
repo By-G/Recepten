@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mijn Recepten">
+<title>Mijn Recepten</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ah-blue: #0063d3;
+    --ah-blue-dark: #004fa3;
+    --ah-blue-light: #e8f1fb;
+    --ah-yellow: #f5d000;
+    --ah-green: #2e7d32;
+    --gray-50: #f7f8fa;
+    --gray-100: #eef0f3;
+    --gray-200: #dde1e7;
+    --gray-500: #7a8494;
+    --gray-700: #3d4452;
+    --gray-900: #1a1f2e;
+    --white: #ffffff;
+    --red: #d32f2f;
+    --radius: 12px;
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Nunito', sans-serif; background: var(--gray-50); color: var(--gray-900); min-height: 100vh; max-width: 480px; margin: 0 auto; }
+
+  .ah-header { background: var(--ah-blue); padding: 14px 16px 12px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 200; }
+  .ah-logo { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem; background: var(--ah-yellow); color: var(--ah-blue-dark); padding: 4px 10px; border-radius: 6px; letter-spacing: -0.02em; flex-shrink: 0; }
+  .header-title { font-weight: 700; font-size: 1rem; color: var(--white); flex: 1; }
+  .back-btn { background: none; border: none; color: var(--white); font-size: 1.6rem; cursor: pointer; padding: 0 6px 0 0; display: none; line-height: 1; }
+  .icon-btn { background: rgba(255,255,255,0.18); border: none; border-radius: 8px; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.3rem; flex-shrink: 0; }
+  .icon-btn:hover { background: rgba(255,255,255,0.28); }
+
+  .search-section { background: var(--ah-blue); padding: 0 16px 14px; }
+  .search-box { background: white; border-radius: 10px; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
+  .search-box span { color: var(--gray-500); }
+  .search-box input { flex: 1; border: none; outline: none; font-family: 'Nunito', sans-serif; font-size: 0.95rem; padding: 11px 0; color: var(--gray-900); background: transparent; }
+
+  #list-view, #detail-view, #form-view { display: none; }
+  #list-view.active, #detail-view.active, #form-view.active { display: block; }
+
+  .tools-row { display: flex; gap: 8px; padding: 12px 16px 0; }
+  .tool-chip { display: flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 20px; border: 1.5px solid var(--gray-200); background: white; font-family: 'Nunito', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--gray-700); cursor: pointer; }
+  .tool-chip:hover { border-color: var(--ah-blue); color: var(--ah-blue); }
+
+  .section-head { padding: 14px 16px 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-500); }
+
+  .recipe-grid { padding: 0 16px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .recipe-card { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); cursor: pointer; border: 1.5px solid var(--gray-100); display: flex; align-items: stretch; transition: all 0.15s; }
+  .recipe-card:hover { box-shadow: var(--shadow-md); border-color: var(--ah-blue); transform: translateY(-1px); }
+  .card-img { width: 90px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 2.4rem; flex-shrink: 0; }
+  .card-body { flex: 1; padding: 12px 12px 12px 14px; display: flex; flex-direction: column; justify-content: center; gap: 5px; }
+  .card-name { font-size: 0.95rem; font-weight: 700; color: var(--gray-900); line-height: 1.25; }
+  .card-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag { font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 20px; background: var(--ah-blue-light); color: var(--ah-blue); }
+  .tag.green { background: #e8f5e9; color: var(--ah-green); }
+  .card-meta-row { display: flex; gap: 10px; }
+  .card-meta-item { font-size: 0.77rem; color: var(--gray-500); font-weight: 600; display: flex; align-items: center; gap: 3px; }
+  .card-arrow { padding: 0 12px 0 4px; color: var(--ah-blue); font-size: 1.2rem; display: flex; align-items: center; }
+
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { color: var(--gray-500); font-size: 0.95rem; line-height: 1.6; }
+
+  .detail-hero { background: var(--ah-blue-light); height: 180px; display: flex; align-items: center; justify-content: center; font-size: 5rem; }
+  .detail-body { padding: 0 16px 40px; }
+  .detail-title { font-size: 1.4rem; font-weight: 800; color: var(--gray-900); margin-top: 16px; line-height: 1.2; }
+  .detail-source-line { font-size: 0.85rem; color: var(--gray-500); margin-top: 4px; font-weight: 600; }
+  .detail-source-line a { color: var(--ah-blue); text-decoration: none; font-weight: 700; }
+  .detail-stats { display: flex; border: 1.5px solid var(--gray-200); border-radius: var(--radius); margin-top: 16px; overflow: hidden; background: white; }
+  .stat-item { flex: 1; padding: 12px 8px; text-align: center; border-right: 1.5px solid var(--gray-200); }
+  .stat-item:last-child { border-right: none; }
+  .stat-icon { font-size: 1.1rem; }
+  .stat-value { font-size: 0.9rem; font-weight: 800; color: var(--gray-900); margin-top: 2px; }
+  .stat-label { font-size: 0.7rem; color: var(--gray-500); font-weight: 600; }
+  .section-title { font-size: 1rem; font-weight: 800; color: var(--gray-900); margin: 22px 0 10px; display: flex; align-items: center; gap: 6px; }
+  .persons-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .persons-label { font-size: 0.85rem; color: var(--gray-500); font-weight: 700; }
+  .persons-ctrl { display: flex; align-items: center; border: 1.5px solid var(--gray-200); border-radius: 8px; overflow: hidden; background: white; }
+  .p-btn { width: 34px; height: 34px; border: none; background: none; font-size: 1.2rem; cursor: pointer; color: var(--ah-blue); font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .p-btn:hover { background: var(--ah-blue-light); }
+  .p-val { width: 32px; text-align: center; font-weight: 800; font-size: 0.95rem; border-left: 1.5px solid var(--gray-200); border-right: 1.5px solid var(--gray-200); padding: 4px 0; }
+  .ingredient-list { list-style: none; border: 1.5px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; background: white; }
+  .ingredient-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid var(--gray-100); font-size: 0.9rem; }
+  .ingredient-item:last-child { border-bottom: none; }
+  .ingr-amount { font-weight: 700; color: var(--ah-blue); min-width: 70px; font-size: 0.88rem; }
+  .ingr-name { flex: 1; color: var(--gray-700); font-weight: 600; }
+  .step-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .step-item { background: white; border: 1.5px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; gap: 12px; font-size: 0.9rem; line-height: 1.55; color: var(--gray-700); font-weight: 600; }
+  .step-num { width: 28px; height: 28px; border-radius: 8px; background: var(--ah-blue); color: white; font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .tip-box { background: #fff8e1; border-left: 4px solid var(--ah-yellow); border-radius: 0 var(--radius) var(--radius) 0; padding: 12px 14px; font-size: 0.87rem; color: #5d4037; font-weight: 600; margin-top: 10px; }
+  .subsection { font-size: 0.8rem; font-weight: 800; color: var(--ah-blue); margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .delete-btn { margin-top: 24px; width: 100%; padding: 13px; background: none; border: 1.5px solid #ffcdd2; border-radius: var(--radius); color: var(--red); font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+  .delete-btn:hover { background: #ffebee; }
+
+  .form-body { padding: 16px 16px 60px; }
+  .form-section-title { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ah-blue); margin: 20px 0 8px; }
+  .form-section-title:first-child { margin-top: 0; }
+  .form-field { margin-bottom: 12px; }
+  .form-field label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--gray-700); margin-bottom: 5px; }
+  .form-field input, .form-field textarea { width: 100%; padding: 11px 13px; border: 1.5px solid var(--gray-200); border-radius: 10px; font-family: 'Nunito', sans-serif; font-size: 0.93rem; font-weight: 600; color: var(--gray-900); background: white; outline: none; transition: border-color 0.15s; }
+  .form-field input:focus, .form-field textarea:focus { border-color: var(--ah-blue); }
+  .form-field textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+  .form-hint { font-size: 0.77rem; color: var(--gray-500); margin-top: 4px; font-weight: 600; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .save-btn { width: 100%; padding: 15px; background: var(--ah-blue); color: white; border: none; border-radius: var(--radius); font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800; cursor: pointer; margin-top: 16px; }
+  .save-btn:hover { background: var(--ah-blue-dark); }
+</style>
+</head>
+<body>
+
+<div id="list-view">
+  <header class="ah-header">
+    <div class="ah-logo">Gianni</div>
+    <span class="header-title">Mijn Recepten</span>
+    <button class="icon-btn" onclick="showForm()">+</button>
+  </header>
+  <div class="search-section">
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="search" id="search-input" placeholder="Zoek een recept..." oninput="renderList()">
+    </div>
+  </div>
+  <div class="tools-row">
+    <button class="tool-chip" onclick="exportRecipes()">📤 Backup</button>
+    <button class="tool-chip" onclick="document.getElementById('import-file').click()">📥 Importeer</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importRecipes(event)">
+  </div>
+  <div class="section-head" id="count-label"></div>
+  <div class="recipe-grid" id="recipe-grid"></div>
+</div>
+
+<div id="detail-view">
+  <header class="ah-header">
+    <button class="back-btn" onclick="showList()" style="display:flex">‹</button>
+    <span class="header-title" id="detail-header-title"></span>
+  </header>
+  <div id="detail-content"></div>
+</div>
+
+<div id="form-view">
+  <header class="ah-header">
+    <button class="back-btn" onclick="showList()" style="display:flex">‹</button>
+    <span class="header-title">Nieuw recept</span>
+  </header>
+  <div class="form-body">
+    <div class="form-section-title">Basisinfo</div>
+    <div class="form-field"><label>Naam *</label><input type="text" id="f-name" placeholder="bv. Fusilli met tomatensaus"></div>
+    <div class="two-col">
+      <div class="form-field"><label>Emoji</label><input type="text" id="f-emoji" placeholder="🍝" maxlength="2"></div>
+      <div class="form-field"><label>Personen</label><input type="number" id="f-persons" placeholder="4" min="1"></div>
+    </div>
+    <div class="two-col">
+      <div class="form-field"><label>Bereidingstijd</label><input type="text" id="f-time" placeholder="30 min"></div>
+      <div class="form-field"><label>Kcal p.p.</label><input type="number" id="f-kcal" placeholder="530"></div>
+    </div>
+    <div class="form-section-title">Ingrediënten</div>
+    <div class="form-field">
+      <textarea id="f-ingredients" placeholder="Eén ingrediënt per regel:&#10;300 g fusilli&#10;1 el olijfolie"></textarea>
+      <p class="form-hint">Hoeveelheid + product op dezelfde regel</p>
+    </div>
+    <div class="form-section-title">Bereidingswijze</div>
+    <div class="form-field">
+      <textarea id="f-steps" placeholder="Eén stap per regel:&#10;Kook de pasta beetgaar.&#10;Verhit olijfolie."></textarea>
+      <p class="form-hint">Elke stap op een nieuwe regel. Nummering hoeft niet.</p>
+    </div>
+    <div class="form-section-title">Extra (optioneel)</div>
+    <div class="form-field"><label>Tip</label><input type="text" id="f-tip" placeholder="bv. Lekker met basilicumblaadjes"></div>
+    <div class="form-field"><label>Bron / URL</label><input type="url" id="f-source" placeholder="https://..."></div>
+    <button class="save-btn" onclick="saveRecipe()">✓ Recept opslaan</button>
+  </div>
+</div>
+
+<script>
+const KEY = 'mijn_recepten_v2';
+
+const DEFAULTS = [
+  {
+    id: 1, name: "Vega-bonensoep", emoji: "🍲", persons: 4, time: "30 min", kcal: null,
+    ingredients: [
+      {amount:"50 g", name:"boter"},{amount:"2", name:"winterpenen"},{amount:"1", name:"prei"},
+      {amount:"1", name:"ui"},{amount:"3", name:"aardappelen"},{amount:"2", name:"bouillontabletten (groente)"},
+      {amount:"1 blik", name:"bruine bonen (400 g)"},{amount:"1 liter", name:"water"},
+      {amount:"naar smaak", name:"peper en zout"},{amount:"optioneel", name:"vegetarische spekjes en gebakken uitjes"}
+    ],
+    steps: [
+      "Snijd de winterpeen in kleine blokjes, de prei in dunne ringen en de aardappelen in blokjes.",
+      "Verhit 25 g boter in een soeppan en bak de helft van de peen, prei, ui en aardappel 5 minuten.",
+      "Voeg de bouillontabletten, bruine bonen en 1 liter water toe. Breng aan de kook en laat 8 minuten zachtjes koken.",
+      "Haal de pan van het vuur en pureer de soep met een staafmixer. Breng op smaak met peper en zout.",
+      "Voeg de rest van de groenten toe en kook nog 6-7 minuten tot de groenten beetgaar zijn. Roer regelmatig.",
+      "Verhit de rest van de boter en bak de vegetarische spekjes 3 minuten bruin. Voeg toe aan de soep.",
+      "Serveer met gebakken uitjes."
+    ],
+    tip: null, source: "https://www.ah.nl/allerhande/recept/R-R853380/vega-bonensoep"
+  },
+  {
+    id: 2, name: "Fusilli met groentesaus en hamblokjes", emoji: "🍝", persons: 4, time: "15 min", kcal: 530,
+    ingredients: [
+      {amount:"300 g", name:"fusilli"},{amount:"1 el", name:"traditionele olijfolie"},
+      {amount:"450 g", name:"macaroni-spaghettigroente"},{amount:"250 g", name:"hamblokjes"},
+      {amount:"520 g", name:"AH BASIC pastasaus basilicum"},{amount:"50 g", name:"Grana Padano 32+"}
+    ],
+    steps: [
+      "Kook de fusilli beetgaar volgens de aanwijzingen op de verpakking. Verhit ondertussen de olijfolie in een hapjespan en bak de groenten 5 min. op middelhoog vuur.",
+      "Voeg de hamblokjes toe en bak 1 min. mee. Schenk de pastasaus bij het groente-hammengsel en warm 2 min. goed door.",
+      "Giet de pasta af en meng door de saus. Rasp er de Grana Padano over en serveer."
+    ],
+    tip: "Lekker met basilicumblaadjes.", source: "https://www.ah.nl/allerhande/recept/R-R1190891/fusilli-met-groentesaus-en-hamblokjes"
+  },
+  {
+    id: 3, name: "Frittata met spinazie", emoji: "🍳", persons: 4, time: "30 min", kcal: null,
+    ingredients: [
+      {amount:"300 g", name:"verse spinazie"},{amount:"2", name:"tomaten"},{amount:"1", name:"ui"},
+      {amount:"1 el", name:"Italiaanse kruiden"},{amount:"3", name:"eieren"},{amount:"scheutje", name:"melk"},
+      {amount:"naar smaak", name:"geraspte kaas"},{amount:"naar smaak", name:"zout en peper"}
+    ],
+    steps: [
+      "Verwarm de oven voor op 200 °C.",
+      "Snijd de ui en tomaten in stukjes.",
+      "Giet een scheutje olie in een pan en fruit de ui aan. Voeg na 2-3 minuten de spinazie toe en bak totdat de spinazie geslonken is. Voeg de spinazie eventueel in delen toe.",
+      "Zodra de spinazie geslonken is, voeg je de blokjes tomaat en Italiaanse kruiden toe en bak je dit een paar minuten mee.",
+      "Laat eventueel de spinazie uitlekken in een zeef als het geheel erg vochtig is.",
+      "Meng in een kom de eieren met de melk.",
+      "Schep de spinazie in een ovenschaal. Giet het ei-mengsel hier overheen. Strooi wat geraspte kaas over de ovenschotel.",
+      "Zet de frittata circa 20 minuten in de voorverwarmde oven."
+    ],
+    tip: null, source: "https://www.lekkerensimpel.com/frittata-met-spinazie/"
+  },
+  {
+    id: 4, name: "Ovenschotel met sperziebonen", emoji: "🥘", persons: 3, time: "40 min", kcal: null,
+    ingredients: [
+      {amount:"500 g", name:"aardappelschijfjes (voorgekookt)"},{amount:"400 g", name:"sperziebonen"},
+      {amount:"200 g", name:"vegetarisch gehakt"},{amount:"2 tenen", name:"knoflook"},{amount:"1", name:"ui"},
+      {amount:"1", name:"rode peper"},{amount:"2 el", name:"crème fraîche"},{amount:"2 el", name:"ketjap manis"},
+      {amount:"150 g", name:"geraspte kaas"},{amount:"naar smaak", name:"margarine en olie"},
+      {amount:"naar smaak", name:"gemalen peper"}
+    ],
+    steps: [
+      "Verwarm de oven voor op 200 °C. Vet een ovenschaal in met margarine.",
+      "Kook de sperziebonen 5 minuten.",
+      "Snipper de ui, snijd de rode peper en knoflook fijn.",
+      "Verhit een scheutje olie en fruit de ui. Voeg het gehakt toe en bak kort mee.",
+      "Voeg de rode peper en knoflook toe en bak 3-4 minuten mee.",
+      "Voeg de ketjap, crème fraîche en gekookte sperziebonen toe, roer goed door en bak nog ca. 2 minuten op laag vuur.",
+      "Schep het mengsel in de ovenschaal. Dek af met de aardappelschijfjes en strooi de geraspte kaas eroverheen.",
+      "Bak 20 minuten in de oven tot de kaas goed gesmolten is. Serveer direct."
+    ],
+    tip: null, source: "https://www.puursuzanne.nl/recepten/ovenschotel-met-sperziebonen"
+  },
+  {
+    id: 5, name: "Turkse linzensoep", emoji: "🍜", persons: 4, time: "35 min", kcal: null,
+    ingredients: [
+      {amount:"1", name:"ui"},{amount:"2", name:"aardappelen"},{amount:"1", name:"winterpeen"},
+      {amount:"200 g", name:"rode linzen"},{amount:"1 el", name:"olijfolie"},{amount:"1 tl", name:"komijn"},
+      {amount:"1 el", name:"tomatenpuree"},{amount:"½ tl", name:"chiliflakes"},
+      {amount:"2", name:"bouillonblokjes (groente of kip)"},{amount:"naar smaak", name:"verse munt"},
+      {amount:"naar smaak", name:"peper en zout"},{amount:"1 partje", name:"citroen (voor garnering)"}
+    ],
+    steps: [
+      "Snipper de ui. Schil de aardappelen en winterpeen en snijd in blokjes. Spoel de linzen af onder koud stromend water.",
+      "Verhit de olie in een soeppan op middelhoog vuur en fruit hierin de komijn, tomatenpuree en de helft van de chiliflakes 1 minuut. Voeg de ui, aardappel en winterpeen toe en bak 5 minuten.",
+      "Voeg 1,5 liter water, de bouillonblokjes en linzen toe en breng aan de kook. Laat de soep 20 minuten koken tot de groenten en linzen gaar zijn.",
+      "Neem de pan van het vuur en pureer de soep met een staafmixer. Breng op smaak met peper en eventueel zout.",
+      "Verdeel over 4 kommen en garneer met munt en de rest van de chiliflakes. Serveer met een partje citroen."
+    ],
+    tip: null, source: "https://www.jumbo.com/recepten/turkse-linzensoep-503979"
+  },
+  {
+    id: 6, name: "Aardappelsalade: fris en romig", emoji: "🥗", persons: 6, time: "30 min", kcal: null,
+    ingredients: [
+      {amount:"1 kg", name:"vastkokende aardappels"},{amount:"1 teen", name:"knoflook"},
+      {amount:"1 tl", name:"mosterd"},{amount:"8", name:"kleine augurken"},{amount:"naar smaak", name:"verse bieslook"},
+      {amount:"6 el", name:"yoghurt"},{amount:"4 el", name:"mayonaise"},{amount:"2", name:"eieren"},
+      {amount:"naar smaak", name:"peper en zout"}
+    ],
+    steps: [
+      "Schil de aardappels en snijd in blokjes van ca. 1 cm.",
+      "Kook de aardappels 10 minuten in water met een snufje zout. Giet af en spoel met koud water.",
+      "Kook de eieren hardgekookt in 8 minuten. Spoel af met koud water.",
+      "Meng de yoghurt met de mosterd, mayonaise en pers het teentje knoflook erbij uit. Breng op smaak met peper, zout en fijngehakte verse bieslook.",
+      "Snijd de augurkjes en gekookte eieren fijn. Meng dit door de aardappels.",
+      "Schep als laatste de romige bieslooksaus door de aardappelsalade.",
+      "Laat de aardappelsalade afgedekt minimaal een uur afkoelen in de koelkast. Serveer eventueel met extra bieslook."
+    ],
+    tip: null, source: "https://www.leukerecepten.nl/recepten/aardappelsalade/"
+  },
+  {
+    id: 7, name: "Rijstschotel met tonijn en sperziebonen", emoji: "🍚", persons: 2, time: "25 min", kcal: null,
+    ingredients: [
+      {amount:"150 g", name:"rijst"},{amount:"1 blikje", name:"tonijn op olie (160 g)"},{amount:"1", name:"ui"},
+      {amount:"1 teen", name:"knoflook"},{amount:"1", name:"rode peper"},{amount:"200 g", name:"sperziebonen"},
+      {amount:"2", name:"paprika's"},{amount:"3 tl", name:"pesto"},{amount:"1 tl", name:"paprikapoeder"},
+      {amount:"1 el", name:"basilicum"},{amount:"snufje", name:"zwarte peper"},{amount:"50 g", name:"feta"}
+    ],
+    steps: [
+      "Zet een pan water op en kook de rijst volgens de gebruiksaanwijzing op de verpakking.",
+      "Kook de sperziebonen ongeveer 8 minuten.",
+      "Snijd de ui, rode peper, paprika's en feta in stukjes.",
+      "Verhit een scheutje olie in een pan en fruit de ui met de knoflook en rode peper aan.",
+      "Voeg na circa 3-4 minuten de stukjes paprika toe en bak ze ongeveer 3-4 minuten mee.",
+      "Voeg de paprikapoeder, pesto en tonijn toe en meng alles goed door elkaar.",
+      "Voeg de gekookte sperziebonen en de rijst toe, meng goed.",
+      "Serveer met de blokjes feta erbovenop."
+    ],
+    tip: null, source: "https://www.lekkerensimpel.com/rijstschotel-met-tonijn-en-sperziebonen/"
+  },
+  {
+    id: 8, name: "Romige zuurkoolschotel", emoji: "🥔", persons: 4, time: "55 min", kcal: null,
+    ingredients: [
+      {amount:"250 g", name:"gerookte spekreepjes"},{amount:"150 ml", name:"water"},
+      {amount:"750 g", name:"aardappelen"},{amount:"2 teentjes", name:"knoflook"},{amount:"1", name:"ui"},
+      {amount:"1 el", name:"tomatenpuree"},{amount:"500 g", name:"zuurkool"},
+      {amount:"naar smaak", name:"peper"},{amount:"200 ml", name:"crème fraîche"},
+      {amount:"100 g", name:"geraspte kaas"},{amount:"1 tl", name:"oregano"}
+    ],
+    steps: [
+      "Kook de aardappelen in 20 minuten gaar. Bak in een hapjespan de spekreepjes in 4 minuten knapperig uit.",
+      "Voeg knoflook en uien toe en bak 4 minuten mee. Schep de tomatenpuree erdoor en bak 1 minuut mee. Voeg de zuurkool met het water toe en stoof 15 minuten. Verwarm de oven voor op 200 °C.",
+      "Giet de aardappelen af en vang het kookvocht op. Stamp tot een smeuïge puree. Voeg peper naar smaak toe.",
+      "Schep de helft van de aardappelpuree in de ovenschaal. Verdeel de zuurkool erover en dek af met de rest van de puree.",
+      "Meng de crème fraîche met de kaas en oregano. Strijk dit over de aardappelpuree.",
+      "Bak de zuurkoolschotel in de voorverwarmde oven 20-25 minuten goudbruin."
+    ],
+    tip: null, source: "https://www.jumbo.com/recepten/romige-zuurkoolschotel-502745"
+  },
+  {
+    id: 9, name: "Vegetarische aardappel-broccoli ovenschotel", emoji: "🥦", persons: 4, time: "40 min", kcal: null,
+    ingredients: [
+      {amount:"4", name:"eieren"},{amount:"900 g", name:"broccoliroosjes"},
+      {amount:"750 g", name:"aardappelpuree"},{amount:"175 g", name:"geraspte oude kaas"},
+      {amount:"125 ml", name:"crème fraîche"},{amount:"6 el", name:"melk"},{amount:"1", name:"ui"},
+      {amount:"1 teen", name:"knoflook"},{amount:"1 mespunt", name:"gedroogde nootmuskaat"},
+      {amount:"1 el", name:"olijfolie"},{amount:"naar smaak", name:"peper en zout"}
+    ],
+    steps: [
+      "Verwarm de oven voor op 200 °C en vet een ovenschaal in met een beetje olie.",
+      "Versnipper de ui en snijd de knoflook fijn.",
+      "Kook de broccoliroosjes in circa 5 minuten nét niet helemaal gaar.",
+      "Verhit de olijfolie in een hapjespan en fruit hierin de ui en knoflook. Voeg de broccoli toe en roerbak even.",
+      "Klop de eieren los met de crème fraîche, melk, geraspte kaas, nootmuskaat, zout en peper. Schep dit door het broccolimengsel.",
+      "Roer de aardappelpuree los met een vork. Schep de helft in de ovenschaal en strijk glad.",
+      "Schep het broccolimengsel op de aardappelpuree en verdeel de resterende puree erover.",
+      "Zet de schaal iets onder het midden in de oven en bak 20–25 minuten tot de bovenkant goudbruin is."
+    ],
+    tip: null, source: null
+  },
+  {
+    id: 10, name: "Vegetarische lasagne met linzen", emoji: "🍝", persons: 4, time: "60 min", kcal: null,
+    ingredients: [
+      {amount:"1", name:"ui"},{amount:"1 teentje", name:"knoflook"},{amount:"100 g", name:"wortel"},
+      {amount:"2 stengels", name:"bleekselderij"},{amount:"1", name:"paprika"},
+      {amount:"250 g", name:"champignons"},{amount:"400 g", name:"tomatenblokjes"},
+      {amount:"40 g", name:"tomatenpuree"},{amount:"240 g", name:"linzen (uit blik, uitgelekt)"},
+      {amount:"1-2 el", name:"gedroogde Italiaanse kruiden"},{amount:"1", name:"bouillonblokje groente"},
+      {amount:"200 g", name:"lasagnebladen"},{amount:"60 g", name:"Parmezaanse kaas"},
+      {amount:"75 g", name:"boter (bechamel)"},{amount:"75 g", name:"tarwebloem (bechamel)"},
+      {amount:"450 ml", name:"halfvolle melk (bechamel)"},{amount:"450 ml", name:"water (bechamel)"},
+      {amount:"naar smaak", name:"nootmuskaat, peper en zout"}
+    ],
+    steps: [
+      "Verwarm de oven voor op 180 °C en zet een ovenschaal klaar.",
+      "Snipper de ui, snij de knoflook, wortel en bleekselderij klein. Bak deze groenten kort in olijfolie. Voeg de paprika toe en bak mee. Voeg de champignons toe en bak tot de groenten gaar zijn.",
+      "Voeg de tomatenpuree, tomatenblokjes, 400 ml water, bouillonblokje en Italiaanse kruiden toe. Laat 15 minuten pruttelen.",
+      "Giet de linzen af, spoel ze af en voeg toe aan de saus. Breng op smaak en laat nog 5 minuten pruttelen.",
+      "Maak de bechamelsaus: smelt de boter, roer de bloem erdoor en voeg afwisselend melk en water toe tot een gladde saus. Voeg het bouillonblokje toe en breng op smaak met nootmuskaat, zout en peper.",
+      "Bouw de lasagne op: begin met een laag rode saus, gevolgd door lasagnebladen, bechamelsaus en herhaal. Eindig met bechamelsaus en rasp Parmezaanse kaas erover.",
+      "Bak de lasagne 20-30 minuten in de oven tot de bovenste laag goudbruin is en de lasagnebladen gaar zijn."
+    ],
+    tip: null, source: "https://foxilicious.nl/vegetarische-lasagne-bolognese"
+  },
+  {
+    id: 11, name: "Vegetarische cannelloni", emoji: "🫙", persons: 8, time: "60 min", kcal: null,
+    ingredients: [
+      {amount:"2", name:"uien"},{amount:"6 el", name:"milde olijfolie"},
+      {amount:"1200 g", name:"verse spinazie"},{amount:"500 g", name:"ricotta"},
+      {amount:"2 snufjes", name:"gemalen nootmuskaat"},{amount:"naar smaak", name:"peper en zout"},
+      {amount:"550 g", name:"vegan veldbonen gehakt"},{amount:"500 g", name:"mascarpone"},
+      {amount:"1000 g", name:"gezeefde tomaten"},{amount:"400 g", name:"cannelloni"}
+    ],
+    steps: [
+      "Verwarm de oven voor op 180 °C. Snipper de uien. Verhit de olie en fruit de uien 2 min. Voeg de spinazie in delen toe en laat slinken. Laat uitlekken in een vergiet en druk het vocht eruit.",
+      "Doe de spinazie samen met de ricotta in een hakmolen en maal fijn. Breng op smaak met nootmuskaat, peper en eventueel zout.",
+      "Verhit de rest van de olie en bak het veldbonen gehakt in 4 min. rul op middelhoog vuur. Breng op smaak.",
+      "Klop de mascarpone los en meng met de gezeefde tomaten. Verdeel 2 el van de tomatensaus over elke ovenschaal.",
+      "Doe het spinaziemengsel in een spuitzak. Vul de cannelloni en verdeel naast elkaar over de ovenschalen. Verdeel het gehakt en de rest van de tomatensaus erover.",
+      "Bak de cannelloni ca. 40 min. in het midden van de oven gaar."
+    ],
+    tip: null, source: "https://www.ah.nl/r/931316"
+  }
+];
+
+function load() {
+  try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch(e){}
+  save(DEFAULTS); return DEFAULTS;
+}
+function save(data) { localStorage.setItem(KEY, JSON.stringify(data)); }
+
+function parseIngredients(text) {
+  return text.split('\n').map(l => l.replace(/^[\*\-•]\s*/, '').trim()).filter(Boolean).map(l => {
+    const m = l.match(/^([\d\/\.,]+\s*(?:g|kg|ml|l|el|tl|blik|liter|stuk(?:s)?|zakje|pak|bos|teen|tenen|snufje|mespunt|naar smaak|optioneel)?\.?)\s+(.+)/i);
+    return m ? {amount: m[1].trim(), name: m[2].trim()} : {amount:'', name: l};
+  });
+}
+function parseSteps(text) {
+  return text.split('\n').map(l => l.replace(/^\d+[\.\)]\s*/, '').trim()).filter(Boolean);
+}
+
+let curPersons = {};
+
+function renderList() {
+  const recipes = load();
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = recipes.filter(r => r.name.toLowerCase().includes(q));
+  document.getElementById('count-label').textContent = filtered.length + ' recept' + (filtered.length !== 1 ? 'en' : '');
+  const grid = document.getElementById('recipe-grid');
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="emoji">${q?'🔍':'🥄'}</div><p>${q ? 'Geen recepten gevonden voor "'+q+'".' : 'Nog geen recepten.<br>Druk op <strong>+</strong> om er een toe te voegen!'}</p></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(r => `
+    <div class="recipe-card" onclick="showDetail(${r.id})">
+      <div class="card-img">${r.emoji||'🍽️'}</div>
+      <div class="card-body">
+        <div class="card-name">${r.name}</div>
+        <div class="card-tags">
+          ${r.time ? `<span class="tag">⏱ ${r.time}</span>` : ''}
+          ${r.kcal ? `<span class="tag">${r.kcal} kcal</span>` : ''}
+          ${r.persons ? `<span class="tag green">👥 ${r.persons} p.</span>` : ''}
+        </div>
+        <div class="card-meta-row">
+          <span class="card-meta-item">🥕 ${r.ingredients.length} ingrediënten</span>
+          <span class="card-meta-item">📋 ${r.steps.length} stappen</span>
+        </div>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+  `).join('');
+}
+
+function showList() {
+  document.getElementById('list-view').className = 'active';
+  document.getElementById('detail-view').className = '';
+  document.getElementById('form-view').className = '';
+  renderList();
+  window.scrollTo(0,0);
+}
+
+function showDetail(id) {
+  const r = load().find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('list-view').className = '';
+  document.getElementById('detail-view').className = 'active';
+  document.getElementById('form-view').className = '';
+  document.getElementById('detail-header-title').textContent = r.name;
+  curPersons[id] = curPersons[id] || r.persons || 4;
+  renderDetail(r);
+  window.scrollTo(0,0);
+}
+
+function renderDetail(r) {
+  const base = r.persons || 4;
+  const cur = curPersons[r.id];
+  const ratio = cur / base;
+
+  function scale(amt) {
+    if (!amt) return '';
+    const m = amt.match(/^([\d\/\.,]+)(.*)/);
+    if (!m) return amt;
+    let n = parseFloat(m[1].replace(',','.'));
+    if (isNaN(n)) return amt;
+    n = Math.round(n * ratio * 10) / 10;
+    return n + m[2];
+  }
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-hero">${r.emoji||'🍽️'}</div>
+    <div class="detail-body">
+      <h1 class="detail-title">${r.name}</h1>
+      ${r.source ? `<div class="detail-source-line">Bron: <a href="${r.source}" target="_blank">${r.source.replace(/https?:\/\/(www\.)?/,'').split('/')[0]}</a></div>` : ''}
+      <div class="detail-stats">
+        ${r.persons ? `<div class="stat-item"><div class="stat-icon">👥</div><div class="stat-value">${r.persons}</div><div class="stat-label">personen</div></div>` : ''}
+        ${r.time ? `<div class="stat-item"><div class="stat-icon">⏱</div><div class="stat-value">${r.time}</div><div class="stat-label">bereiden</div></div>` : ''}
+        ${r.kcal ? `<div class="stat-item"><div class="stat-icon">🔥</div><div class="stat-value">${Math.round(r.kcal*ratio)}</div><div class="stat-label">kcal</div></div>` : ''}
+      </div>
+      <div class="section-title">🛒 Ingrediënten</div>
+      ${r.persons ? `<div class="persons-row">
+        <span class="persons-label">Aantal personen:</span>
+        <div class="persons-ctrl">
+          <button class="p-btn" onclick="changePersoons(${r.id},-1)">−</button>
+          <div class="p-val" id="pval-${r.id}">${cur}</div>
+          <button class="p-btn" onclick="changePersoons(${r.id},1)">+</button>
+        </div>
+      </div>` : ''}
+      <ul class="ingredient-list">
+        ${r.ingredients.map(i => `<li class="ingredient-item"><span class="ingr-amount">${scale(i.amount)}</span><span class="ingr-name">${i.name}</span></li>`).join('')}
+      </ul>
+      <div class="section-title">👨‍🍳 Aan de slag</div>
+      <ol class="step-list">
+        ${r.steps.map((s,i) => `<li class="step-item"><span class="step-num">${i+1}</span><span>${s}</span></li>`).join('')}
+      </ol>
+      ${r.tip ? `<div class="tip-box">💡 <strong>Tip:</strong> ${r.tip}</div>` : ''}
+      <button class="delete-btn" onclick="deleteRecipe(${r.id})">🗑 Recept verwijderen</button>
+    </div>
+  `;
+}
+
+function changePersoons(id, delta) {
+  const r = load().find(x => x.id === id);
+  if (!r) return;
+  curPersons[id] = Math.max(1, (curPersons[id] || r.persons || 4) + delta);
+  renderDetail(r);
+}
+
+function showForm() {
+  document.getElementById('list-view').className = '';
+  document.getElementById('detail-view').className = '';
+  document.getElementById('form-view').className = 'active';
+  ['f-name','f-emoji','f-persons','f-time','f-kcal','f-ingredients','f-steps','f-tip','f-source'].forEach(id => document.getElementById(id).value = '');
+  window.scrollTo(0,0);
+}
+
+function saveRecipe() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Vul een naam in.'); return; }
+  const ingrText = document.getElementById('f-ingredients').value;
+  const stepsText = document.getElementById('f-steps').value;
+  if (!ingrText.trim()) { alert('Voeg ingrediënten toe.'); return; }
+  if (!stepsText.trim()) { alert('Voeg stappen toe.'); return; }
+  const recipes = load();
+  recipes.push({
+    id: Date.now(), name,
+    emoji: document.getElementById('f-emoji').value.trim() || '🍽️',
+    persons: parseInt(document.getElementById('f-persons').value) || 4,
+    time: document.getElementById('f-time').value.trim() || null,
+    kcal: parseInt(document.getElementById('f-kcal').value) || null,
+    ingredients: parseIngredients(ingrText),
+    steps: parseSteps(stepsText),
+    tip: document.getElementById('f-tip').value.trim() || null,
+    source: document.getElementById('f-source').value.trim() || null
+  });
+  save(recipes);
+  showList();
+}
+
+function deleteRecipe(id) {
+  if (!confirm('Recept verwijderen?')) return;
+  save(load().filter(r => r.id !== id));
+  showList();
+}
+
+function exportRecipes() {
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([JSON.stringify(load(),null,2)],{type:'application/json'})),
+    download: 'recepten-backup.json'
+  });
+  a.click();
+}
+
+function importRecipes(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw 0;
+      if (confirm(data.length + ' recepten gevonden. Huidige overschrijven?')) { save(data); renderList(); alert('Geïmporteerd!'); }
+    } catch { alert('Ongeldig bestand.'); }
+  };
+  r.readAsText(file);
+  e.target.value = '';
+}
+
+showList();
+</script>
+</body>
+</html>
